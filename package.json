@@ -1,0 +1,58 @@
+{
+    "name": "@rymi/react",
+    "version": "1.0.0",
+    "description": "React provider and hook for Rymi voice agents over WebRTC",
+    "license": "MIT",
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/rymi-live/rymi-react.git"
+    },
+    "bugs": {
+        "url": "https://github.com/rymi-live/rymi-react/issues"
+    },
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "scripts": {
+        "build": "vite build",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest run --environment jsdom"
+    },
+    "peerDependencies": {
+        "react": ">=18",
+        "react-dom": ">=18"
+    },
+    "dependencies": {
+        "@livekit/components-react": "^2.8.0",
+        "@rymi/web": "workspace:*",
+        "livekit-client": "^2.8.0"
+    },
+    "devDependencies": {
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^14.0.0",
+        "@types/react": "^18.3.12",
+        "@types/react-dom": "^18.3.1",
+        "jsdom": "^28.1.0",
+        "typescript": "^5.0.2",
+        "vite": "^5.0.0",
+        "vite-plugin-dts": "^3.0.0",
+        "vitest": "^4.0.18"
+    }
+}
