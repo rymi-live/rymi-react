@@ -60,6 +60,8 @@ function AgentProbe() {
       <div data-testid="connected">{String(agent.isConnected)}</div>
       <div data-testid="call-error">{agent.callError?.message ?? 'none'}</div>
       <div data-testid="call-error-code">{agent.callError?.code ?? 'none'}</div>
+      <div data-testid="captured-fields">{JSON.stringify((agent as any).capturedFields)}</div>
+      <button data-testid="clear-conv" onClick={() => agent.clearLiveConversation()}>Clear</button>
     </div>
   );
 }
@@ -129,4 +131,90 @@ beforeEach(() => {
     });
     expect(screen.getByTestId('call-error-code')).toHaveTextContent('session_init_failed');
   });
+
+  it('later value replaces earlier for captured_field', async () => {
+    render(
+      <RymiProvider serverUrl="wss://livekit.example" token="token">
+        <AgentProbe />
+      </RymiProvider>
+    );
+
+    await act(async () => {
+      livekitMocks.room.emit(
+        'dataReceived',
+        new TextEncoder().encode(JSON.stringify({
+          type: 'captured_field',
+          field: 'budget',
+          value: '3 lakh'
+        }))
+      );
+    });
+
+    expect(screen.getByTestId('captured-fields')).toHaveTextContent(
+      JSON.stringify([{ field: 'budget', value: '3 lakh' }])
+    );
+
+    await act(async () => {
+      livekitMocks.room.emit(
+        'dataReceived',
+        new TextEncoder().encode(JSON.stringify({
+          type: 'captured_field',
+          field: 'budget',
+          value: '5 lakh'
+        }))
+      );
+    });
+
+    expect(screen.getByTestId('captured-fields')).toHaveTextContent(
+      JSON.stringify([{ field: 'budget', value: '5 lakh' }])
+    );
+  });
+
+  it('reset on call start clears captured_field', async () => {
+    render(
+      <RymiProvider serverUrl="wss://livekit.example" token="token">
+        <AgentProbe />
+      </RymiProvider>
+    );
+
+    await act(async () => {
+      livekitMocks.room.emit(
+        'dataReceived',
+        new TextEncoder().encode(JSON.stringify({
+          type: 'captured_field',
+          field: 'budget',
+          value: '3 lakh'
+        }))
+      );
+    });
+
+    expect(screen.getByTestId('captured-fields')).toHaveTextContent('3 lakh');
+
+    await act(async () => {
+      screen.getByTestId('clear-conv').click();
+    });
+
+    expect(screen.getByTestId('captured-fields')).toHaveTextContent('[]');
+  });
+
+  it('unknown packet types still ignored', async () => {
+    render(
+      <RymiProvider serverUrl="wss://livekit.example" token="token">
+        <AgentProbe />
+      </RymiProvider>
+    );
+
+    await act(async () => {
+      livekitMocks.room.emit(
+        'dataReceived',
+        new TextEncoder().encode(JSON.stringify({
+          type: 'unrecognized_packet_xyz',
+          payload: 123
+        }))
+      );
+    });
+
+    expect(screen.getByTestId('call-error')).toHaveTextContent('none');
+  });
 });
+

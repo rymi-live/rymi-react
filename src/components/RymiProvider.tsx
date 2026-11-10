@@ -47,6 +47,11 @@ export interface LiveCallError {
     message: string;
 }
 
+export interface LiveCapturedField {
+    field: string;
+    value: string;
+}
+
 /**
  * A transient "the agent is doing something" chip shown while a tool call is in
  * flight (e.g. "Checking calendar…"). Set on the tool-activity `start` packet
@@ -113,6 +118,13 @@ export function useRymiAgent() {
     const [thinkingEntries, setThinkingEntries] = useState<LiveThinkingEntry[]>([]);
     const [toolActivity, setToolActivity] = useState<LiveToolActivity | null>(null);
     const [callError, setCallError] = useState<LiveCallError | null>(null);
+    const [capturedFields, setCapturedFields] = useState<LiveCapturedField[]>([]);
+
+    useEffect(() => {
+        if (connectionState === ConnectionState.Connecting || connectionState === ConnectionState.Connected) {
+            setCapturedFields([]);
+        }
+    }, [connectionState]);
 
     useEffect(() => {
         const handleDataReceived = (payload: Uint8Array) => {
@@ -160,6 +172,24 @@ export function useRymiAgent() {
                             ? msg.message.trim()
                             : 'The call failed.'
                     });
+                    return;
+                }
+
+                if (msg.type === 'captured_field') {
+                    const field = typeof msg.field === 'string' ? msg.field.trim() : '';
+                    const value = typeof msg.value === 'string' ? msg.value : '';
+                    if (field) {
+                        setCapturedFields((current) => {
+                            const idx = current.findIndex((item) => item.field === field);
+                            if (idx >= 0) {
+                                const next = [...current];
+                                next[idx] = { field, value };
+                                return next;
+                            }
+                            return [...current, { field, value }];
+                        });
+                    }
+                    return;
                 }
             } catch {
                 // Ignore non-JSON packets on the data channel.
@@ -225,12 +255,14 @@ export function useRymiAgent() {
         thinkingEntries,
         toolActivity,
         callError,
+        capturedFields,
         clearCallError: () => setCallError(null),
         clearLiveConversation: () => {
             setTranscript(EMPTY_TRANSCRIPT);
             setThinkingEntries([]);
             setToolActivity(null);
             setCallError(null);
+            setCapturedFields([]);
         }
     };
 }

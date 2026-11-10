@@ -75,6 +75,7 @@ describe('transcriptRelay wire format', () => {
     it('emits exactly this closed set of packet types', () => {
         expect(emittedTypes(RELAY)).toEqual([
             'affect',
+            'captured_field',
             'thinking',
             'tool_activity',
             'transcript',
